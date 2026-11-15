@@ -1,11 +1,13 @@
 /**
- * Monga 응답 수집 + 추천 학습용 Apps Script (v5)
+ * Monga 응답 수집 + 추천 학습용 Apps Script (v6)
  *
  * [받는 데이터 (POST)]
  *  1) 결과(kind: "result")      → 첫 번째 시트: 전체·주간 체크 결과
  *  2) 체크인(kind: "checkin")    → "체크인" 시트: 주간 활동 수행 / 미수행 / 다른 추천 요청
  *  3) 동의·철회(kind: "consent") → "동의기록" 시트
  *  4) 활동 제안(kind: "suggest") → "활동제안" 시트 (운영자가 '승인' 열에 Y를 넣으면 추천에 반영)
+ *  5) 이용 기록(kind: "event")   → "이벤트" 시트: 결과 이미지 공유·저장, 친구 초대 (성공 지표용)
+ *  결과 행 맨 끝 '소요시간(초)'는 시작 버튼부터 결과까지 걸린 시간 (성공 지표: 3분 이내)
  *
  * [내려주는 데이터 (GET ?action=model)] — 앱이 스스로 똑똑해지는 부분
  *  - "체크인" 시트 전체를 기질 유형 × 활동별로 집계: n(반응 수), done(수행), down(수행 후 스트레스 감소), rej(다른 추천 요청·맘에 안 듦)
@@ -23,10 +25,12 @@ var SPREADSHEET_ID = "여기에_시트_ID";
 var CHECKIN_SHEET_NAME = "체크인";
 var CONSENT_SHEET_NAME = "동의기록";
 var SUGGEST_SHEET_NAME = "활동제안";
+var EVENT_SHEET_NAME = "이벤트";
 
-var RESULT_HEADER = ["시간", "ID", "이름", "번아웃점수", "번아웃등급", "기질유형", "기질이름"];
+var RESULT_HEADER = ["시간", "ID", "이름(미사용)", "번아웃점수", "번아웃등급", "기질유형", "기질이름"];
 for (var i = 1; i <= 16; i++) RESULT_HEADER.push("문항" + i);
 RESULT_HEADER.push("동의시각");
+RESULT_HEADER.push("소요시간(초)");
 
 var CHECKIN_HEADER = [
   "시간", "익명ID", "체크인날짜", "회복일차",
@@ -35,6 +39,8 @@ var CHECKIN_HEADER = [
   "현재번아웃등급", "강도상한", "기질유형", "동의시각", "주차(월요일)"
 ];
 var CONSENT_HEADER = ["시간(서버)", "익명ID", "구분", "기기시각", "언어"];
+var EVENT_HEADER = ["시간", "익명ID", "이벤트", "기질유형", "동의시각", "언어"];
+var EVENT_NAMES = ["이미지 공유", "이미지 저장", "친구 초대"];
 var SUGGEST_HEADER = [
   "시간", "익명ID", "제안자유형", "계열", "강도(1~3)", "제안내용",
   "승인(Y 입력 시 추천에 반영)", "대상유형(비우면 제안자 유형, ALL=전체)", "영문(선택)", "활동ID", "동의시각", "언어"
@@ -62,13 +68,14 @@ function ensureHeader(sheet, header) {
 }
 function getOrCreate(ss, name) { return ss.getSheetByName(name) || ss.insertSheet(name); }
 
-/** 스크립트를 바꾼 뒤 한 번 실행: 네 시트의 머리글을 맞추고 연결을 확인합니다. */
+/** 스크립트를 바꾼 뒤 한 번 실행: 다섯 시트의 머리글을 맞추고 연결을 확인합니다. */
 function setupTest() {
   var ss = getSpreadsheet();
   ensureHeader(ss.getSheets()[0], RESULT_HEADER);
   ensureHeader(getOrCreate(ss, CHECKIN_SHEET_NAME), CHECKIN_HEADER);
   ensureHeader(getOrCreate(ss, CONSENT_SHEET_NAME), CONSENT_HEADER);
   ensureHeader(getOrCreate(ss, SUGGEST_SHEET_NAME), SUGGEST_HEADER);
+  ensureHeader(getOrCreate(ss, EVENT_SHEET_NAME), EVENT_HEADER);
   Logger.log("연결 성공: " + ss.getName());
   Logger.log("현재 모델 미리보기: " + JSON.stringify(buildModel()).slice(0, 500));
 }
@@ -90,6 +97,15 @@ function doPost(e) {
       var cs = getOrCreate(ss, CONSENT_SHEET_NAME);
       ensureHeader(cs, CONSENT_HEADER);
       cs.appendRow([new Date(), data.uid || "", data.action || "", data.at || "", data.lang || ""]);
+      return json({ result: "ok" });
+    }
+
+    if (data.kind === "event") {
+      if (EVENT_NAMES.indexOf(data.event) < 0) return json({ result: "error", message: "unknown event" });
+      var ev = getOrCreate(ss, EVENT_SHEET_NAME);
+      ensureHeader(ev, EVENT_HEADER);
+      ev.appendRow([new Date(), String(data.uid || "").slice(0, 40), data.event, String(data.typeKey || "").slice(0, 4),
+                    String(data.consentAt || "").slice(0, 40), String(data.lang || "").slice(0, 4)]);
       return json({ result: "ok" });
     }
 
@@ -124,9 +140,10 @@ function doPost(e) {
     ensureHeader(resultSheet, RESULT_HEADER);
     var answers = (data.answers || []).slice(0, 16);
     while (answers.length < 16) answers.push("");
-    resultSheet.appendRow([new Date(), data.id, data.name, data.burnoutScore,
+    var duration = Number(data.durationSec);
+    resultSheet.appendRow([new Date(), data.id, "", data.burnoutScore,
                            data.burnoutLevel, data.typeKey, data.typeName]
-                          .concat(answers).concat([data.consentAt || ""]));
+                          .concat(answers).concat([data.consentAt || "", duration > 0 && duration < 86400 ? duration : ""]));
     return json({ result: "ok" });
 
   } catch (err) {
@@ -173,7 +190,7 @@ function buildModel() {
       });
     });
   }
-  return { version: 1, updated: Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm"), total: total, stats: stats, activities: activities };
+  return { version: 2, updated: Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm"), total: total, stats: stats, activities: activities };
 }
 
 function doGet(e) {
