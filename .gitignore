@@ -1,0 +1,8 @@
+# OS / 편집기 임시 파일
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+~$*
+.vscode/
+.idea/
