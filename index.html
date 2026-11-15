@@ -445,6 +445,14 @@
   .crisis-lines{ display:flex; flex-direction:column; gap:6px; }
   .crisis-lines a{ display:flex; justify-content:space-between; align-items:center; gap:8px; text-decoration:none; color: var(--ink); background: var(--card); border:1px solid var(--line); border-radius:14px; padding:9px 12px; font-size:13px; }
   .crisis-lines a b{ font-family:'Jua',sans-serif; font-size:17px; color: var(--green-deep); }
+  .crisis-lines a{ min-height:44px; }
+  .safety-dialog{ border:none; padding:0; background: transparent; width: min(400px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+  .safety-dialog::backdrop{ background: rgba(20, 30, 24, 0.55); }
+  .safety-dialog .crisis{ margin:0; background: var(--card); padding:18px 18px 16px; max-height: calc(100vh - 32px); overflow:auto; }
+  .safety-dialog .crisis-title{ font-size:19px; word-break: keep-all; }
+  .safety-dialog .crisis-desc{ font-size:14px; word-break: keep-all; }
+  .safety-emergency{ font-size:13px; color: var(--ink-soft); line-height:1.55; margin:10px 0 0; word-break: keep-all; }
+  .safety-dialog .btn{ margin-top:14px; }
 
   /* ---- check-in options / plan note ---- */
   .opt-row{ display:grid; grid-template-columns: repeat(3,1fr); gap:8px; margin-top:8px; }
@@ -684,6 +692,15 @@
 </div>
 
 <input type="file" id="backup-file" accept=".json,application/json" hidden>
+<dialog class="safety-dialog" id="safety-dialog" aria-labelledby="safety-title" aria-describedby="safety-desc">
+  <div class="crisis">
+    <div class="crisis-title" id="safety-title"></div>
+    <div class="crisis-desc" id="safety-desc"></div>
+    <div class="crisis-lines" id="safety-lines"></div>
+    <div class="safety-emergency" id="safety-emergency"></div>
+    <button type="button" class="btn btn-ghost btn-wide" id="safety-close" autofocus></button>
+  </div>
+</dialog>
 <script>
 (function(){
   "use strict";
@@ -965,6 +982,13 @@
       effArrow: { down:"스트레스 ↓", same:"스트레스 →", up:"스트레스 ↑" },
       uidLabel: "내 익명ID",
       resetLink: "처음부터 다시 시작하기",
+      helpLink: "도움이 필요할 때",
+      safetyRepeatTitle: "요즘 힘든 시간이 계속되고 있는 것 같아요",
+      safetyRepeatDesc: "최근 두 번 연속으로 스트레스 신호가 높게 나왔어요. 몽가는 스스로 살펴보는 도구라서 상태를 판단해 줄 수는 없어요. 혼자 버티기보다 전문 상담사와 이야기해 보세요. 전화는 익명으로도 할 수 있어요.",
+      safetyHelpTitle: "도움이 필요할 때",
+      safetyHelpDesc: "마음이 많이 힘들거나 일상을 이어가기 어렵다면 전문 상담사와 이야기해 보세요. 아래 번호는 24시간 연결되고, 익명으로도 상담할 수 있어요.",
+      safetyEmergency: "지금 스스로를 해칠 것 같은 위급한 상황이라면 112 또는 119에 바로 연락하세요.",
+      safetyClose: "닫기",
       backupTitle: "기록 백업",
       backupDesc: "기기나 브라우저를 바꿀 때 백업 파일로 일기, 회복 활동, 방 꾸미기를 그대로 옮길 수 있어요. 파일은 내 기기에 저장되고 어디로도 전송되지 않아요.",
       backupPwLabel: "파일 비밀번호 (선택)",
@@ -1152,6 +1176,13 @@
       effArrow: { down:"stress ↓", same:"stress →", up:"stress ↑" },
       uidLabel: "My anonymous ID",
       resetLink: "Start over from the beginning",
+      helpLink: "When you need help",
+      safetyRepeatTitle: "It looks like things have been hard for a while",
+      safetyRepeatDesc: "Your stress signs came out high twice in a row. Monga is a self-check tool and can't judge your condition, so please talk with a professional counselor instead of holding on alone. You can call anonymously.",
+      safetyHelpTitle: "When you need help",
+      safetyHelpDesc: "If you're struggling a lot or daily life feels hard to keep up, please talk with a professional counselor. These lines (Korea) are open 24 hours and you can stay anonymous.",
+      safetyEmergency: "If you're in immediate danger of hurting yourself, call 112 or 119 right away.",
+      safetyClose: "Close",
       backupTitle: "Back up your records",
       backupDesc: "When you change devices or browsers, a backup file carries your diary, activities and room over. The file is saved on your device and never sent anywhere.",
       backupPwLabel: "File password (optional)",
@@ -3101,6 +3132,38 @@
     });
     return st;
   }
+  // ---- 고위험 추가 보호: 최근 점검 2회 연속 '높음'이면 홈에서 하루 한 번 도움 안내 창 ----
+  // 자가 점검 도구이므로 진단하지 않고 상담 연결만 안내함. 표시 여부는 서버로 보내지 않음.
+  function openSafetyDialog(repeat){
+    var s = t(), dlg = document.getElementById("safety-dialog");
+    document.getElementById("safety-title").textContent = repeat ? s.safetyRepeatTitle : s.safetyHelpTitle;
+    document.getElementById("safety-desc").textContent = repeat ? s.safetyRepeatDesc : s.safetyHelpDesc;
+    document.getElementById("safety-lines").innerHTML = s.crisisLines.map(function(l){
+      return '<a href="tel:' + l[1].replace(/-/g, "") + '"><span>' + esc(l[0]) + '</span><b>' + esc(l[1]) + '</b></a>';
+    }).join("");
+    document.getElementById("safety-emergency").textContent = s.safetyEmergency;
+    document.getElementById("safety-close").textContent = s.safetyClose;
+    if (dlg.open) return;
+    if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  }
+  document.getElementById("safety-close").addEventListener("click", function(){
+    var dlg = document.getElementById("safety-dialog");
+    if (typeof dlg.close === "function") dlg.close(); else dlg.removeAttribute("open");
+  });
+  function repeatedSevere(){
+    var h = (state && state.history) || [];
+    return h.length >= 2 && h[h.length - 1].level === "severe" && h[h.length - 2].level === "severe";
+  }
+  function maybeShowRepeatSafety(today){
+    if (!repeatedSevere() || state.safetyShownDay === today) return;
+    // 홈이 실제로 보일 때만 띄움 (결과 화면 등에서 홈을 미리 그릴 때는 건너뜀)
+    setTimeout(function(){
+      if (elHome.hidden || state.safetyShownDay === today) return;
+      state.safetyShownDay = today; saveState();
+      openSafetyDialog(true);
+    }, 0);
+  }
+
   function crisisHtml(s){
     return '<div class="crisis"><div class="crisis-title">' + esc(s.crisisTitle) + '</div>' +
       '<div class="crisis-desc">' + esc(s.crisisDesc) + '</div><div class="crisis-lines">' +
@@ -3967,6 +4030,7 @@
     html += '<div style="text-align:center;margin:6px 0 18px;display:flex;flex-direction:column;gap:10px;align-items:center;">' +
       '<button type="button" class="link-btn" id="h-result">' + esc(s.viewResultBtn) + '</button>' +
       '<button type="button" class="link-btn" id="h-consent">' + esc(CONSENT ? s.consentOn : s.consentOff) + '</button>' +
+      '<button type="button" class="link-btn" id="h-help">' + esc(s.helpLink) + '</button>' +
       '<button type="button" class="link-btn" id="h-reset">' + esc(s.resetLink) + '</button>' +
       '<div class="cap-row" style="margin-top:0;">' + esc(s.uidLabel) + ': <span style="user-select:all;">' + esc(UID) + '</span></div></div>';
 
@@ -3984,6 +4048,8 @@
     document.getElementById("h-recheck").addEventListener("click", function(){ startQuiz(primaryFull ? "full" : "weekly"); });
     document.getElementById("h-recheck-alt").addEventListener("click", function(){ startQuiz(primaryFull ? "weekly" : "full"); });
     document.getElementById("h-consent").addEventListener("click", function(){ setConsent(!CONSENT); renderHome(); });
+    document.getElementById("h-help").addEventListener("click", function(){ openSafetyDialog(false); });
+    maybeShowRepeatSafety(tk);
     document.getElementById("h-backup-save").addEventListener("click", function(){
       saveBackup(document.getElementById("h-backup-pw"), this, document.getElementById("h-backup-status"));
     });
