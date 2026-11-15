@@ -349,6 +349,11 @@
   .card .btn{ padding:12px 14px 11px; font-size:14.5px; }
   .card-actions{ display:flex; gap:8px; margin-top:14px; }
   .link-btn{ border:none; background:none; color: var(--ink-faint); font-size:12px; text-decoration: underline; padding:0; }
+  .link-btn.tall{ min-height:44px; padding:0 12px; font-size:13px; color: var(--ink-soft); }
+  .backup-pw{ margin-top:12px; }
+  #h-backup-save, #h-backup-load{ flex:1; word-break: keep-all; }
+  .backup-status{ margin:8px 0 0; }
+  .backup-status:empty{ display:none; }
 
   .streak-top{ display:flex; align-items:baseline; gap:8px; }
   .streak-num{ font-family:'Jua',sans-serif; font-size:38px; color: var(--orange); line-height:1; }
@@ -561,6 +566,8 @@
         <div class="policy" id="consent-body" tabindex="0" role="region" aria-label="개인정보 수집·이용 동의서" style="margin:0 0 10px;"></div>
         <label><input type="checkbox" id="consent-check"><span id="consent-label"></span></label>
       </div>
+      <button type="button" class="link-btn tall" id="intro-restore">백업 파일로 이어서 쓰기</button>
+      <div class="note backup-status" id="intro-restore-status" role="status" aria-live="polite"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-primary btn-wide" id="btn-start">시작하기</button>
@@ -676,6 +683,7 @@
 
 </div>
 
+<input type="file" id="backup-file" accept=".json,application/json" hidden>
 <script>
 (function(){
   "use strict";
@@ -957,6 +965,21 @@
       effArrow: { down:"스트레스 ↓", same:"스트레스 →", up:"스트레스 ↑" },
       uidLabel: "내 익명ID",
       resetLink: "처음부터 다시 시작하기",
+      backupTitle: "기록 백업",
+      backupDesc: "기기나 브라우저를 바꿀 때 백업 파일로 일기, 회복 활동, 방 꾸미기를 그대로 옮길 수 있어요. 파일은 내 기기에 저장되고 어디로도 전송되지 않아요.",
+      backupPwLabel: "파일 비밀번호 (선택)",
+      backupPwHint: "비밀번호를 걸면 파일을 열 때 꼭 필요해요. 잊으면 되찾을 수 없어요.",
+      backupSave: "백업 저장",
+      backupLoad: "백업 불러오기",
+      introRestore: "백업 파일로 이어서 쓰기",
+      backupSaved: "백업 파일을 저장했어요. 카톡 '나에게 보내기'나 드라이브에 보관해 두세요.",
+      backupFailed: "백업 파일을 만들지 못했어요. 다시 시도해 주세요.",
+      backupBadFile: "Monga 백업 파일이 아니거나 손상된 파일이에요. 기록은 바뀌지 않았어요.",
+      backupWrongPw: "비밀번호가 맞지 않아요. 기록은 바뀌지 않았어요.",
+      backupPwPrompt: "이 백업 파일의 비밀번호를 입력해 주세요.",
+      backupCanceled: "불러오기를 취소했어요. 기록은 바뀌지 않았어요.",
+      backupConfirm: "백업 파일의 기록으로 바꿀까요? 지금 이 기기에 있는 결과, 일기, 회복 활동, 방 꾸미기는 백업 파일 내용으로 덮어써져요.",
+      backupNoCrypto: "이 브라우저에서는 비밀번호 백업을 쓸 수 없어요. 비밀번호 없이 저장하거나 다른 브라우저에서 시도해 주세요.",
       resetConfirm: "이 기기에 저장된 결과, 체크인, 일기, 동의 설정이 모두 지워지고 첫 화면으로 돌아가요. 되돌릴 수 없어요.\n\n· 일기를 남기려면 먼저 '기록 전체 보기 → 파일로 저장하기'를 하세요.\n· 이미 시트로 보낸 데이터는 지워지지 않아요.\n\n계속할까요?",
       tabDiary: "일기",
       tabAct: "회복 활동",
@@ -1129,6 +1152,21 @@
       effArrow: { down:"stress ↓", same:"stress →", up:"stress ↑" },
       uidLabel: "My anonymous ID",
       resetLink: "Start over from the beginning",
+      backupTitle: "Back up your records",
+      backupDesc: "When you change devices or browsers, a backup file carries your diary, activities and room over. The file is saved on your device and never sent anywhere.",
+      backupPwLabel: "File password (optional)",
+      backupPwHint: "If you set a password, you'll need it to open the file. It can't be recovered if you forget it.",
+      backupSave: "Save backup",
+      backupLoad: "Load backup",
+      introRestore: "Continue from a backup file",
+      backupSaved: "Backup file saved. Keep it somewhere safe, like your cloud drive.",
+      backupFailed: "Couldn't create the backup file. Please try again.",
+      backupBadFile: "This isn't a Monga backup file, or it's damaged. Your records weren't changed.",
+      backupWrongPw: "Wrong password. Your records weren't changed.",
+      backupPwPrompt: "Enter the password for this backup file.",
+      backupCanceled: "Loading canceled. Your records weren't changed.",
+      backupConfirm: "Replace this device's records with the backup? Results, diary, activities and room on this device will be overwritten.",
+      backupNoCrypto: "Password backups aren't available in this browser. Save without a password or try another browser.",
       resetConfirm: "All results, check-ins, diary entries and the data-sharing setting saved on this device will be deleted, and you'll return to the first screen. This can't be undone.\n\n· To keep your diary, first use 'See all entries → Save as a file'.\n· Data already sent to the sheet is not deleted.\n\nContinue?",
       tabDiary: "Diary",
       tabAct: "Activities",
@@ -1356,6 +1394,7 @@
     document.getElementById("lang-en").classList.toggle("active", LANG === "en");
 
     document.getElementById("intro-logo").textContent = s.logo;
+    document.getElementById("intro-restore").textContent = s.introRestore;
     document.getElementById("intro-tagline").innerHTML = s.tagline;
     document.getElementById("intro-step-1").textContent = s.steps[0];
     document.getElementById("intro-step-2").textContent = s.steps[1];
@@ -3916,6 +3955,15 @@
       '<div class="card-actions"><button type="button" class="btn btn-ghost" id="h-invite">' + esc(s.chemInvite) + '</button></div>' +
       '<div class="note" id="h-invite-status" style="margin:8px 0 0;" aria-live="polite"></div></div>';
 
+    // 6) 기록 백업 (기기·브라우저 변경용, 서버 전송 없음)
+    html += '<div class="card"><div class="card-eyebrow"><span>' + esc(s.backupTitle) + '</span></div>' +
+      '<div class="card-desc" style="margin-top:8px;">' + esc(s.backupDesc) + '</div>' +
+      '<input type="password" class="name-input backup-pw" id="h-backup-pw" autocomplete="new-password" placeholder="' + esc(s.backupPwLabel) + '" aria-label="' + esc(s.backupPwLabel) + '" aria-describedby="h-backup-hint">' +
+      '<div class="cap-row" id="h-backup-hint">' + esc(s.backupPwHint) + '</div>' +
+      '<div class="card-actions"><button type="button" class="btn btn-ghost" id="h-backup-save">' + esc(s.backupSave) + '</button>' +
+      '<button type="button" class="btn btn-ghost" id="h-backup-load">' + esc(s.backupLoad) + '</button></div>' +
+      '<div class="note backup-status" id="h-backup-status" role="status" aria-live="polite"></div></div>';
+
     html += '<div style="text-align:center;margin:6px 0 18px;display:flex;flex-direction:column;gap:10px;align-items:center;">' +
       '<button type="button" class="link-btn" id="h-result">' + esc(s.viewResultBtn) + '</button>' +
       '<button type="button" class="link-btn" id="h-consent">' + esc(CONSENT ? s.consentOn : s.consentOff) + '</button>' +
@@ -3936,6 +3984,12 @@
     document.getElementById("h-recheck").addEventListener("click", function(){ startQuiz(primaryFull ? "full" : "weekly"); });
     document.getElementById("h-recheck-alt").addEventListener("click", function(){ startQuiz(primaryFull ? "weekly" : "full"); });
     document.getElementById("h-consent").addEventListener("click", function(){ setConsent(!CONSENT); renderHome(); });
+    document.getElementById("h-backup-save").addEventListener("click", function(){
+      saveBackup(document.getElementById("h-backup-pw"), this, document.getElementById("h-backup-status"));
+    });
+    document.getElementById("h-backup-load").addEventListener("click", function(){
+      pickBackup(document.getElementById("h-backup-status"));
+    });
     document.getElementById("h-reset").addEventListener("click", function(){
       if (window.confirm(s.resetConfirm)) restartFresh();
     });
@@ -3965,6 +4019,116 @@
       }
     });
   }
+
+  // ================= 기록 백업 파일 (기기·브라우저 변경용) =================
+  // 이 기기의 기록을 파일 하나로 내려받고, 다른 기기에서 그 파일로 되살립니다. 네트워크 전송 없음.
+  // 동의 여부는 기기마다 새로 정하도록 옮기지 않고, 시트 기록이 이어지도록 익명 ID는 옮깁니다.
+  var BACKUP_KEYS = ["monga_state", "monga_last_result", "monga_uid", "monga_lang"];
+  var BACKUP_APP = "monga-backup";
+  var PBKDF2_ROUNDS = 250000;
+
+  function b64(bytes){ var str = ""; bytes.forEach(function(b){ str += String.fromCharCode(b); }); return btoa(str); }
+  function unb64(text){ var str = atob(text), out = new Uint8Array(str.length); for (var i = 0; i < str.length; i++) out[i] = str.charCodeAt(i); return out; }
+  function hasCrypto(){ return !!(window.crypto && crypto.subtle && window.TextEncoder); }
+  function deriveKey(pw, salt){
+    return crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]).then(function(base){
+      return crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: PBKDF2_ROUNDS, hash: "SHA-256" },
+        base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    });
+  }
+  function collectBackupData(){
+    var data = {};
+    BACKUP_KEYS.forEach(function(k){ var v = localStorage.getItem(k); if (v !== null) data[k] = v; });
+    return data;
+  }
+  function buildBackupText(pw){
+    var data = collectBackupData();
+    var head = { app: BACKUP_APP, v: 1, createdAt: new Date().toISOString() };
+    if (!pw) return Promise.resolve(JSON.stringify(Object.assign(head, { enc: false, data: data })));
+    var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    return deriveKey(pw, salt).then(function(key){
+      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(JSON.stringify(data)));
+    }).then(function(ct){
+      return JSON.stringify(Object.assign(head, { enc: true, kdf: "PBKDF2-SHA256", rounds: PBKDF2_ROUNDS,
+        salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) }));
+    });
+  }
+  function setStatus(el, msg){ if (el) el.textContent = msg; }
+
+  function saveBackup(pwInput, btn, statusEl){
+    var s = t(), pw = pwInput ? pwInput.value : "";
+    if (pw && !hasCrypto()){ setStatus(statusEl, s.backupNoCrypto); return; }
+    btn.disabled = true;
+    setStatus(statusEl, "");
+    buildBackupText(pw).then(function(text){
+      var d = new Date(), pad = function(n){ return (n < 10 ? "0" : "") + n; };
+      downloadBlob(new Blob([text], { type: "application/json" }),
+        "monga-backup-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + ".json");
+      if (pwInput) pwInput.value = "";
+      setStatus(statusEl, s.backupSaved);
+    }).catch(function(err){
+      console.error("backup failed", err && err.name);
+      setStatus(statusEl, s.backupFailed);
+    }).then(function(){ btn.disabled = false; });
+  }
+
+  // 파일 내용을 검사해 복원할 데이터를 돌려줌. 실패하면 사용자에게 보여줄 문구로 reject.
+  function readBackupText(text){
+    var s = t(), file;
+    try { file = JSON.parse(text); } catch(e){ return Promise.reject(s.backupBadFile); }
+    if (!file || file.app !== BACKUP_APP || file.v !== 1) return Promise.reject(s.backupBadFile);
+    var checkData = function(data){
+      if (!data || typeof data !== "object") throw s.backupBadFile;
+      var st;
+      try { st = JSON.parse(data.monga_state); } catch(e){ throw s.backupBadFile; }
+      if (!st || !st.typeKey) throw s.backupBadFile;
+      var clean = {};
+      BACKUP_KEYS.forEach(function(k){ if (typeof data[k] === "string") clean[k] = data[k]; });
+      return clean;
+    };
+    if (!file.enc) return Promise.resolve(file.data).then(checkData);
+    if (!hasCrypto()) return Promise.reject(s.backupNoCrypto);
+    var pw = window.prompt(s.backupPwPrompt);
+    if (pw === null || pw === "") return Promise.reject(s.backupCanceled);
+    var salt, iv, ct;
+    try { salt = unb64(file.salt); iv = unb64(file.iv); ct = unb64(file.ct); } catch(e){ return Promise.reject(s.backupBadFile); }
+    return deriveKey(pw, salt).then(function(key){
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, ct);
+    }).then(function(plain){
+      var data;
+      try { data = JSON.parse(new TextDecoder().decode(plain)); } catch(e){ throw s.backupBadFile; }
+      return checkData(data);
+    }, function(){ throw s.backupWrongPw; });
+  }
+
+  function applyBackupData(data){
+    BACKUP_KEYS.forEach(function(k){ localStorage.removeItem(k); });
+    Object.keys(data).forEach(function(k){ localStorage.setItem(k, data[k]); });
+    location.replace(location.href.split(/[?#]/)[0]);
+  }
+
+  var backupStatusEl = null;
+  function pickBackup(statusEl){
+    backupStatusEl = statusEl;
+    setStatus(statusEl, "");
+    var input = document.getElementById("backup-file");
+    input.value = "";
+    input.click();
+  }
+  document.getElementById("backup-file").addEventListener("change", function(){
+    var s = t(), file = this.files && this.files[0], statusEl = backupStatusEl;
+    if (!file) return;
+    file.text().then(readBackupText).then(function(data){
+      if (state && !window.confirm(s.backupConfirm)){ setStatus(statusEl, s.backupCanceled); return; }
+      applyBackupData(data);
+    }).catch(function(msg){
+      if (typeof msg !== "string"){ console.error("restore failed", msg && msg.name); msg = s.backupBadFile; }
+      setStatus(statusEl, msg);
+    });
+  });
+  document.getElementById("intro-restore").addEventListener("click", function(){
+    pickBackup(document.getElementById("intro-restore-status"));
+  });
 
   mergeModelActivities(); // 지난번에 받아둔 참여자 제안 활동을 먼저 반영
   applyLanguage();
