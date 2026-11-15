@@ -601,7 +601,7 @@
 
       <div class="section-label" id="label-share">결과 공유하기</div>
       <div class="note" id="share-note" style="margin-top:0;">내 회복 유형과 나랑 잘 맞는 유형을 이미지로 저장하거나 친구에게 공유해보세요.</div>
-      <input type="text" id="name-input" class="name-input" placeholder="이미지에 표시할 이름 (선택)" />
+      <input type="text" id="name-input" class="name-input" placeholder="이미지에 표시할 닉네임 (선택)" aria-label="이미지에 표시할 닉네임 (선택)" />
       <div class="share-preview-label" id="preview-label">공유될 이미지 미리보기</div>
       <div class="share-preview-wrap"><img id="share-preview" alt="공유 이미지 미리보기" /></div>
       <div class="share-row">
@@ -692,7 +692,7 @@
   var DATA_RETENTION = { ko: "파일럿 종료 후 6개월 이내 파기", en: "Deleted within 6 months after the pilot ends" };
   // ▼ 개인정보 수집·이용 동의서에 표시할 보호책임자와 문의처 — 실제 정보로 꼭 확인·입력하세요 ▼
   var PRIVACY_OFFICER = "신성희";
-  var PRIVACY_CONTACT = ""; // 예: 이메일 주소 또는 카카오톡 채널. 비워 두면 문의처 줄에 표시되지 않음
+  var PRIVACY_CONTACT = "roskfl14@naver.com"; // 예: 이메일 주소 또는 카카오톡 채널. 비워 두면 문의처 줄에 표시되지 않음
 
   // ---- 개인정보 수집·이용 동의서 본문 (동의 체크박스 아래 스크롤 박스에 표시) ----
   var PRIVACY_TEXT = {
@@ -705,7 +705,6 @@
           "스트레스·기질 체크의 문항별 응답, 점수, 스트레스 신호 단계, 기질 유형",
           "회복 활동 체크인: 추천 활동, 수행 여부, 스트레스 변화, 하지 못한 이유",
           "동의·철회 시각, 언어 설정",
-          "(선택) 결과 이미지에 표시하려고 직접 입력한 이름",
           "(선택) 직접 제안한 회복 활동 내용",
           "※ 수집하지 않는 정보: 감정 일기 내용과 감정 기록, 연락처, 위치, 기기 식별 정보",
           "※ 스트레스 점수와 스트레스 변화는 건강과 관련된 정보일 수 있습니다."
@@ -739,7 +738,6 @@
           "Your answers to each burnout and temperament question, scores, burnout-signs level and temperament type",
           "Recovery activity check-ins: the suggested activity, whether you did it, stress change, and the reason if you couldn't",
           "The time you agreed or withdrew, and your language setting",
-          "(Optional) The name you typed to show on your result image",
           "(Optional) Recovery activities you suggest",
           "※ Not collected: your diary text and feelings, contact details, location, device identifiers",
           "※ Stress scores and stress changes may count as health-related information."
@@ -868,7 +866,7 @@
       activitiesLabel: "나에게 맞는 회복 활동",
       shareLabel: "결과 공유하기",
       shareNote: "내 회복 유형과 나랑 잘 맞는 유형을 이미지로 저장하거나 친구에게 공유해보세요.",
-      namePlaceholder: "이미지에 표시할 이름 (선택)",
+      namePlaceholder: "이미지에 표시할 닉네임 (선택)",
       previewLabel: "공유될 이미지 미리보기",
       shareBtn: "이미지로 공유하기",
       saveBtn: "이미지 저장하기",
@@ -935,7 +933,7 @@
       weeklyNote: "주간 체크는 4문항 점수를 40점 기준으로 환산해요.",
       consentLabel: "(선택) 위 개인정보 수집·이용에 동의해요",
       consentSummary: "수집 항목·목적·보관 기간 보기",
-      consentItems: [["항목","체크 응답·점수·유형, 익명 ID, 입력한 경우 이름, 회복 활동 체크인(활동·수행 여부·스트레스 변화). 일기 내용과 감정은 보내지 않아요"],["목적","서비스 개선, 문항 신뢰도·타당도 검증 파일럿"],["보관",""],["미동의 시","결과와 기록은 이 기기에만 저장되고, 모든 기능을 그대로 쓸 수 있어요"],["철회","홈 화면 맨 아래에서 언제든 끌 수 있어요"]],
+      consentItems: [["항목","체크 응답·점수·유형, 익명 ID, 회복 활동 체크인(활동·수행 여부·스트레스 변화). 일기 내용과 감정은 보내지 않아요"],["목적","서비스 개선, 문항 신뢰도·타당도 검증 파일럿"],["보관",""],["미동의 시","결과와 기록은 이 기기에만 저장되고, 모든 기능을 그대로 쓸 수 있어요"],["철회","홈 화면 맨 아래에서 언제든 끌 수 있어요"]],
       diaryTitle: "감정 회복 일기",
       diaryDay: function(n){ return n + "일차"; },
       diaryQ: "지금 마음은 어떤가요?",
@@ -1040,7 +1038,7 @@
       activitiesLabel: "Recovery activities for you",
       shareLabel: "Share your result",
       shareNote: "Save or share an image with your recovery type and your best match.",
-      namePlaceholder: "Name to show on the image (optional)",
+      namePlaceholder: "Nickname to show on the image (optional)",
       previewLabel: "Preview of the image that will be shared",
       shareBtn: "Share as image",
       saveBtn: "Save image",
@@ -1107,7 +1105,7 @@
       weeklyNote: "Weekly scores are scaled from 4 items to a 40-point scale.",
       consentLabel: "(Optional) I agree to the collection and use of personal information above",
       consentSummary: "What's collected, why, and for how long",
-      consentItems: [["Data","Answers, scores, type, anonymous ID, name if entered, activity check-ins (activity, done or not, stress change). Diary text and feelings are never sent"],["Purpose","Improving the service; pilot for question reliability and validity"],["Kept",""],["If you don't","Results stay only on this device, and every feature still works"],["Withdraw","Turn it off anytime at the bottom of the home screen"]],
+      consentItems: [["Data","Answers, scores, type, anonymous ID, activity check-ins (activity, done or not, stress change). Diary text and feelings are never sent"],["Purpose","Improving the service; pilot for question reliability and validity"],["Kept",""],["If you don't","Results stay only on this device, and every feature still works"],["Withdraw","Turn it off anytime at the bottom of the home screen"]],
       diaryTitle: "Emotion recovery diary",
       diaryDay: function(n){ return "Day " + n; },
       diaryQ: "How are you feeling right now?",
@@ -1375,6 +1373,7 @@
     document.getElementById("label-share").textContent = s.shareLabel;
     document.getElementById("share-note").textContent = s.shareNote;
     document.getElementById("name-input").placeholder = s.namePlaceholder;
+    document.getElementById("name-input").setAttribute("aria-label", s.namePlaceholder);
     document.getElementById("preview-label").textContent = s.previewLabel;
     document.getElementById("btn-share").textContent = s.shareBtn;
     document.getElementById("btn-copy").textContent = s.saveBtn;
@@ -1637,13 +1636,12 @@
 
   function sendResultToSheet(){
     if (!lastSummaryParts) return;
-    var name = (document.getElementById("name-input").value || "").trim();
     var koType = TYPES[lastSummaryParts.typeKey].ko;
     var payload = {
       kind: "result",
       consentAt: CONSENT_AT,
       id: responseId,
-      name: name,
+      // 닉네임은 결과 이미지에만 쓰고 시트로는 보내지 않음 (익명 ID로만 구분)
       burnoutScore: lastSummaryParts.burnoutSum,
       burnoutLevel: BURNOUT_LABEL_KO[lastSummaryParts.level],
       typeKey: lastSummaryParts.typeKey,
